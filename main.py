@@ -49,6 +49,7 @@ class UUMF(MainWindow,QThread):
         self.slot3.setChecked(True)
         self.slot4.setChecked(True)
         
+        
         self.submit.clicked.connect(self.start)
         
         self.seat.setValidator(QIntValidator(0, 100))
@@ -114,7 +115,11 @@ class UUMF(MainWindow,QThread):
         old = self.submit.text()
         self.submit.setText("...")
         self.submit.update()
-        data = advisor(self.classes.text(),int(self.seat.text()),strDays,strTimes)
+        data = []
+        try:
+            data = advisor(self.classes.text(),int(self.seat.text()),strDays,strTimes)
+        except Exception as err:
+            print(str(type(err)).strip("'>").split(".")[-1])
         self.submit.setText(old)
         
         if len(data) != 0 and len(data[0]) != 0:
