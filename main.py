@@ -105,6 +105,7 @@ class UUMF(MainWindow,QThread):
         self.combinations.clear()
         self.combinations.update()
         self.tableWidget.clearContents()
+        self.bigData.clear()
         
         strTimes = " ".join(list(map(str,self.timeArray)))
         strDays = " ".join(self.dayArray)
@@ -115,16 +116,17 @@ class UUMF(MainWindow,QThread):
         old = self.submit.text()
         self.submit.setText("...")
         self.submit.update()
-        data = []
+        
         try:
             data = advisor(self.classes.text(),int(self.seat.text()),strDays,strTimes)
+            self.bigData = data
         except Exception as err:
             print(str(type(err)).strip("'>").split(".")[-1])
+        
         self.submit.setText(old)
         
-        if len(data) != 0 and len(data[0]) != 0:
-            self.combinations.addItems(list(map(str,list(range(len(data))))))
-            self.bigData = data
+        if len(self.bigData) != 0 and len(self.bigData[0]) != 0:
+            self.combinations.addItems(list(map(str,list(range(len(self.bigData))))))
 
 print("riad is hacking you")
 print("HAHAHAHAHAHAHAAA")
