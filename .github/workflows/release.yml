@@ -32,8 +32,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.release_token }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.event.inputs.rel_tag }}
+        tag_name: ${{ github.event.inputs.rel_tag }}
+        release_name: UUMF ${{ github.event.inputs.rel_tag }}
         draft: false
         prerelease: false
     - name: Upload Release Asset
