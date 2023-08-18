@@ -61,16 +61,6 @@ jobs:
         pip install -r reqs.txt
     - name: Build to exe
       run: pyinstaller -F main.py -n UUMF
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.release_token }}
-      with:
-        tag_name: ${{ github.event.inputs.rel_tag }}
-        release_name: UUMF ${{ github.event.inputs.rel_tag }}
-        draft: false
-        prerelease: false
     - name: Upload Release Asset
       id: upload-release-asset 
       uses: actions/upload-release-asset@v1
