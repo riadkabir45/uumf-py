@@ -26,6 +26,8 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Lint with flake8
+      run: pyinstaller -F main.py -n UUMF
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -43,6 +45,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.release_token }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: ./my-artifact.zip
-        asset_name: my-artifact.zip
+        asset_path: dist/UUMF
+        asset_name: UUMF
         asset_content_type: application/zip
