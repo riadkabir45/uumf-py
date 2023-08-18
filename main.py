@@ -97,7 +97,7 @@ class UUMF(MainWindow,QThread):
                     cDayN = 5
                 else:
                     cDayN = 6
-                self.setCell(cDayN,cSlot,f"{course['Class']} {course['Section']}\n{course['Faculty']} {course['Seats']}")
+                self.setCell(cDayN,cSlot-1,f"{course['Class']} {course['Section']}\n{course['Faculty']} {course['Seats']}")
     
     def run(self):
         self.timeArray.sort()
