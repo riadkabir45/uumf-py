@@ -4,11 +4,7 @@ from re import findall as RegSearchAll
 from itertools import product as Posibility
 from json import loads as Jload
 
-
-
-credins = {'username':'','password':''}
-
-def getCredins():
+def getCredins(credins):
 	downloader = Curl()
 	res = downloader.get('https://usis.bracu.ac.bd/idp/realms/interim/protocol/openid-connect/auth?client_id=frontend&redirect_uri=https%3A%2F%2Fusis.bracu.ac.bd%2Finterim%2F&response_mode=fragment&response_type=code&scope=openid')
 	res = downloader.post('https://usis.bracu.ac.bd/idp/realms/interim/login-actions/authenticate?'+RegSearch('session_code[^"]+',str(res.content)).group().replace("&amp;", "&"),data=credins)
@@ -34,8 +30,8 @@ def cleanTime(times):
     return timeArray
 
 
-def getData():
-    downloader = getCredins()
+def getData(credins):
+    downloader = getCredins(credins)
     response = downloader.get("https://usis.bracu.ac.bd/interim/api/v1/offered-courses")
     if '[200]' not in str(response):
         return ["EXPIRED"]
@@ -81,9 +77,9 @@ def posibilityClasses(data,timeTable,seatv,output,time=[],secs=[]):
 def slotter(data):
     return data[0]+"SLOT"+data[1]
 
-def advisor(allClass,seatNumbers,strDays,strTimes):
+def advisor(allClass,seatNumbers,strDays,strTimes,credins):
     timeTable = list(map(slotter,Posibility(strDays.upper().split(),strTimes.upper().split())))
-    bigData = getData()
+    bigData = getData(credins)
     argv = allClass.split()
 
     allAdvisings = []

@@ -5,6 +5,8 @@ from PyQt5.QtGui import QIntValidator, QStandardItem
 from PyQt5.QtCore import QThread,Qt
 import sys
 
+
+
 class UUMF(MainWindow,QThread):
     def __init__(self):
         self.timeArray = []
@@ -118,7 +120,7 @@ class UUMF(MainWindow,QThread):
         self.submit.update()
         
         try:
-            data = advisor(self.classes.text(),int(self.seat.text()),strDays,strTimes)
+            data = advisor(self.classes.text(),int(self.seat.text()),strDays,strTimes,credins = {'username':self.user.text(),'password':self.passwd.text()})
             self.bigData = data
         except Exception as err:
             print(str(type(err)),err)
