@@ -121,7 +121,7 @@ class UUMF(MainWindow,QThread):
             data = advisor(self.classes.text(),int(self.seat.text()),strDays,strTimes)
             self.bigData = data
         except Exception as err:
-            print(str(type(err)).strip("'>").split(".")[-1])
+            print(str(type(err)),err)
         
         self.submit.setText(old)
         

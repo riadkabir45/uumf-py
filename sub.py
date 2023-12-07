@@ -2,13 +2,27 @@ from requests import Session as Curl
 from re import search as RegSearch
 from re import findall as RegSearchAll
 from itertools import product as Posibility
+from json import loads as Jload
 
-downloader = Curl()
+
+
+credins = {'username':'','password':''}
+
+def getCredins():
+	downloader = Curl()
+	res = downloader.get('https://usis.bracu.ac.bd/idp/realms/interim/protocol/openid-connect/auth?client_id=frontend&redirect_uri=https%3A%2F%2Fusis.bracu.ac.bd%2Finterim%2F&response_mode=fragment&response_type=code&scope=openid')
+	res = downloader.post('https://usis.bracu.ac.bd/idp/realms/interim/login-actions/authenticate?'+RegSearch('session_code[^"]+',str(res.content)).group().replace("&amp;", "&"),data=credins)
+	res = downloader.post('https://usis.bracu.ac.bd/idp/realms/interim/protocol/openid-connect/token',data={'code':res.url.split("=")[-1],'grant_type':'authorization_code','client_id':'frontend','redirect_uri':'https://usis.bracu.ac.bd/interim/'})
+	auth = res.text.split(",")[0].split(":")[1].strip('"')
+	downloader.headers.update({'Authorization': 'Bearer '+auth})
+	return downloader
 
 def cleanTime(times):
-    timeArray = RegSearchAll('[A-Z][a-z]\([^\)]+\)',times)
+    timeArray = RegSearchAll('[A-Z][a-z]+\([^\)]+\)',times)
     for i in range(len(timeArray)):
-        room = RegSearch('UB[0-9]+\)',timeArray[i]).group()
+        room = RegSearch('[0-9A-Z]+-[0-9A-Z]+\)|[0-9A-Za-z_]+\)',timeArray[i]).group()
+        day = RegSearch('[A-Z][a-z]+',timeArray[i]).group()
+        timeArray[i] = timeArray[i].replace(day,day[:2])
         timeArray[i] = timeArray[i].replace(room,"")
         timeArray[i] = timeArray[i].replace("(08:00 AM-09:20 AM-","Slot1")
         timeArray[i] = timeArray[i].replace("(09:30 AM-10:50 AM-","Slot2")
@@ -19,22 +33,27 @@ def cleanTime(times):
         timeArray[i] = timeArray[i].replace("(05:00 PM-06:20 PM-","Slot7")
     return timeArray
 
+
 def getData():
-    response = downloader.get("https://admissions.bracu.ac.bd/academia/admissionRequirement/getAvailableSeatStatus")
-    dataTable = response.text.split("<tr>")[1:]
+    downloader = getCredins()
+    response = downloader.get("https://usis.bracu.ac.bd/interim/api/v1/offered-courses")
+    if '[200]' not in str(response):
+        return ["EXPIRED"]
+    dataTable = Jload(response.text)
     cleanedTable = []
     for data in dataTable:
         dataDict = {}
-        className = RegSearch('100px">[0-9A-Z]+',data).group()[7:]
-        section = RegSearch('69px;">[0-9]+',data).group()[7:]
-        fac = RegSearch('68px;">[A-Z]+',data).group()[7:]
-        seats = RegSearch('120px;">[\-0-9]+',data).group()[8:]
-        time = RegSearch('290px;">[^/]+',data).group()[8:-1]
+        className = data['courseCode']
+        section = data['courseDetails']
+        fac = data['empShortName']
+        seats = data['availableSeat']
+        time = data['classSchedule']+data['classLabSchedule']
         dataDict["Class"] = className
-        dataDict["Section"] = section
+        dataDict["Section"] = section[-3:-1]
         dataDict["Time"] = list(map(str.upper,cleanTime(time)))
-        dataDict["Seats"] = int(seats)
+        dataDict["Seats"] = 0 if seats == None else int(seats)
         dataDict["Faculty"] = fac
+        #print(dataDict)
         cleanedTable.append(dataDict)
     return cleanedTable
 
@@ -73,10 +92,21 @@ def advisor(allClass,seatNumbers,strDays,strTimes):
 
     argv = list(map(str.upper,argv))
 
-    for course in bigData:
-        for i in range(len(argv)):
-            if argv[i] == course["Class"]:
-                allAdvisings[i].append(course)
+    for i in range(len(argv)):
+        if '-' not in argv[i]:
+            for course in bigData:
+                if argv[i] == course["Class"]:
+                    allAdvisings[i].append(course)
+        else:
+            code,sub = argv[i].split('-')
+            if sub.isnumeric():
+                for course in bigData:
+                    if code == course["Class"] and int(sub) == int(course["Section"]):
+                        allAdvisings[i].append(course)
+            else:
+                for course in bigData:
+                    if code == course["Class"] and sub == course["Faculty"]:
+                        allAdvisings[i].append(course)
     advisedClasses = []
     posibilityClasses(allAdvisings,timeTable,seatNumbers,advisedClasses)
     return advisedClasses
