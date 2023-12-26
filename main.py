@@ -79,7 +79,10 @@ class UUMF(MainWindow,QThread):
     
     def handleCombo(self):
         self.tableWidget.clearContents()
-        index = int(self.combinations.currentText())
+        index = self.combinations.currentText()
+        if not index.isdecimal():
+            return
+        index = int(index)
         routine = self.bigData[index]
         for course in routine:
             for cTime in course["Time"]:
