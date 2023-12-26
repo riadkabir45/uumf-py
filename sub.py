@@ -42,7 +42,7 @@ def getData(credins):
         className = data['courseCode']
         section = data['courseDetails']
         fac = data['empShortName']
-        seats = data['availableSeat']
+        seats = str(int(data['availableSeat']) - int(data['totalFillupSeat']))
         time = data['classSchedule']+data['classLabSchedule']
         dataDict["Class"] = className
         dataDict["Section"] = section[-3:-1]
