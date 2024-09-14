@@ -4,6 +4,9 @@ from re import findall as RegSearchAll
 from itertools import product as Posibility
 from json import loads as Jload
 
+class InvalidUsisUser(Exception):
+    pass
+
 def getCredins(credins):
 	downloader = Curl()
 	res = downloader.get('https://usis.bracu.ac.bd/idp/realms/interim/protocol/openid-connect/auth?client_id=frontend&redirect_uri=https%3A%2F%2Fusis.bracu.ac.bd%2Finterim%2F&response_mode=fragment&response_type=code&scope=openid')
@@ -12,6 +15,23 @@ def getCredins(credins):
 	auth = res.text.split(",")[0].split(":")[1].strip('"')
 	downloader.headers.update({'Authorization': 'Bearer '+auth})
 	return downloader
+
+
+def getCredentials(credins):
+    user,passwd = credins['username'],credins['password']
+    dataDownloader = Curl()
+    dataDownloader.get("https://usis.bracu.ac.bd/academia")
+    response = dataDownloader.post(
+        "https://usis.bracu.ac.bd/academia/j_spring_security_check",
+        data={"j_username": user, "j_password": passwd},
+    )
+    if (
+        response.url
+        == "https://usis.bracu.ac.bd/academia/login/authfail?login_error=1"
+    ):
+        raise InvalidUsisUser
+    return dataDownloader
+
 
 def cleanTime(times):
     timeArray = RegSearchAll('[A-Z][a-z]+\([^\)]+\)',times)
@@ -36,20 +56,36 @@ def getData(credins):
     if '[200]' not in str(response):
         return ["EXPIRED"]
     dataTable = Jload(response.text)
+    sessionId = dataTable[0]['academicSessionId']
+    rex = downloader.get("https://usis.bracu.ac.bd/interim/api/v1/exam-schedules")
+
+    usisData = {}
+    for course in rex.json():
+        if course['courseCode'] not in usisData:
+            usisData[course['courseCode']] = {}
+        usisData[course['courseCode']][course['section'][-3:-1]] = f"{course['courseCode']} - {course['examDate']} @ {course['startTime']} - {course['endTime']}"
+    
     cleanedTable = []
     for data in dataTable:
         dataDict = {}
         className = data['courseCode']
-        section = data['courseDetails']
+        section = data['courseDetails'][-3:-1]
         fac = data['empShortName']
         seats = data['defaultSeatCapacity'] - data['totalFillupSeat']
         time = data['classSchedule']+data['classLabSchedule']
+        exams = data['dayNo']
         dataDict["Class"] = className
-        dataDict["Section"] = section[-3:-1]
+        dataDict["Section"] = section
         dataDict["Time"] = list(map(str.upper,cleanTime(time)))
         dataDict["Seats"] = 0 if seats == None else int(seats)
         dataDict["Faculty"] = fac
-        #print(dataDict)
+        dataDict['exam'] = exams
+        
+        ex_course = usisData.get(className)
+        if ex_course is not None:
+            ex_section = ex_course.get(section)
+            if ex_section is not None:
+                dataDict['exam'] = ex_section
         cleanedTable.append(dataDict)
     return cleanedTable
 

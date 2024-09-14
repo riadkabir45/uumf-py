@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QHeaderView, QAbstractIte
 from PyQt5.QtGui import QIntValidator, QStandardItem
 from PyQt5.QtCore import QThread,Qt
 import sys
+import pickle
+from math import ceil
 
 
 
@@ -11,7 +13,32 @@ class UUMF(MainWindow,QThread):
     def __init__(self):
         self.timeArray = []
         self.dayArray = []  
-        self.bigData = []  
+        self.bigData = []
+
+        self.fData = {}
+        try:
+            with open('data.pkl', 'rb') as f:
+                self.fData = pickle.load(f)
+        except Exception as err:
+            print(err)
+            self.fData['course'] = "CSE220 bIo101"
+            self.fData['uname'] = ""
+            self.fData['seat'] = "1"
+            self.fData['sa'] = False
+            self.fData['su'] = True
+            self.fData['mo'] = True
+            self.fData['tu'] = True
+            self.fData['we'] = True
+            self.fData['th'] = False
+            self.fData['fr'] = False
+            self.fData['slot1'] = True
+            self.fData['slot2'] = True
+            self.fData['slot3'] = True
+            self.fData['slot4'] = True
+            self.fData['slot5'] = False
+            self.fData['slot6'] = False
+            self.fData['slot7'] = False
+
         
         super().__init__()
         app = QApplication(sys.argv)
@@ -40,20 +67,27 @@ class UUMF(MainWindow,QThread):
         
         self.combinations.currentIndexChanged.connect(self.handleCombo)
         
-        self.classes.setText('CSE221 MaT216 cse320 cSe330')
-        self.seat.setText('1')
-        self.su.setChecked(True)
-        self.mo.setChecked(True)
-        self.tu.setChecked(True)
-        self.we.setChecked(True)
-        self.slot1.setChecked(True)
-        self.slot2.setChecked(True)
-        self.slot3.setChecked(True)
-        self.slot4.setChecked(True)
+        self.classes.setText(self.fData['course'])
+        self.seat.setText(self.fData['seat'])
+        self.user.setText(self.fData['uname'])
+        self.sa.setChecked(self.fData['sa'])
+        self.su.setChecked(self.fData['su'])
+        self.mo.setChecked(self.fData['mo'])
+        self.tu.setChecked(self.fData['tu'])
+        self.we.setChecked(self.fData['we'])
+        self.th.setChecked(self.fData['th'])
+        self.fr.setChecked(self.fData['fr'])
+        self.slot1.setChecked(self.fData['slot1'])
+        self.slot2.setChecked(self.fData['slot2'])
+        self.slot3.setChecked(self.fData['slot3'])
+        self.slot4.setChecked(self.fData['slot4'])
+        self.slot5.setChecked(self.fData['slot5'])
+        self.slot6.setChecked(self.fData['slot6'])
+        self.slot7.setChecked(self.fData['slot7'])
         
         
+        self.dynamicTextArea("No Exams Found")
         self.submit.clicked.connect(self.start)
-        
         self.seat.setValidator(QIntValidator(0, 100))
         
         self.win.show()
@@ -77,6 +111,11 @@ class UUMF(MainWindow,QThread):
         item.setTextAlignment(Qt.AlignHCenter)
         self.tableWidget.setItem(y,x,item)
     
+    def dynamicTextArea(self,text):
+        self.examBar.setText(text)
+        height = self.examBar.document().size().height()
+        self.examBar.setFixedHeight(ceil(height))
+    
     def handleCombo(self):
         self.tableWidget.clearContents()
         index = self.combinations.currentText()
@@ -84,7 +123,9 @@ class UUMF(MainWindow,QThread):
             return
         index = int(index)
         routine = self.bigData[index]
+        exams = ""
         for course in routine:
+            exams += course['exam'] + '\n'
             for cTime in course["Time"]:
                 cDay = cTime[:2]
                 cSlot = int(cTime[-1])
@@ -103,8 +144,29 @@ class UUMF(MainWindow,QThread):
                 else:
                     cDayN = 6
                 self.setCell(cDayN,cSlot-1,f"{course['Class']} {course['Section']}\n{course['Faculty']} {course['Seats']}")
+        self.dynamicTextArea(exams)
     
     def run(self):
+        with open('data.pkl', 'wb') as f:
+            self.fData['course'] = self.classes.text()
+            self.fData['seat'] = self.seat.text()
+            self.fData['uname'] = self.user.text()
+            self.fData['sa'] = self.sa.isChecked()
+            self.fData['su'] = self.su.isChecked()
+            self.fData['mo'] = self.mo.isChecked()
+            self.fData['tu'] = self.tu.isChecked()
+            self.fData['we'] = self.we.isChecked()
+            self.fData['th'] = self.th.isChecked()
+            self.fData['fr'] = self.fr.isChecked()
+            self.fData['slot1'] = self.slot1.isChecked()
+            self.fData['slot2'] = self.slot2.isChecked()
+            self.fData['slot3'] = self.slot3.isChecked()
+            self.fData['slot4'] = self.slot4.isChecked()
+            self.fData['slot5'] = self.slot5.isChecked()
+            self.fData['slot6'] = self.slot6.isChecked()
+            self.fData['slot7'] = self.slot7.isChecked()
+            pickle.dump(self.fData, f)
+
         self.timeArray.sort()
         self.dayArray.sort()
         self.combinations.clear()
