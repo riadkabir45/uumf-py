@@ -125,20 +125,33 @@ def advisor(allClass,seatNumbers,strDays,strTimes,credins):
     argv = list(map(str.upper,argv))
 
     for i in range(len(argv)):
-        if '-' not in argv[i]:
+        if '-' not in argv[i] and '=' not in argv[i]:
             for course in bigData:
                 if argv[i] == course["Class"]:
                     allAdvisings[i].append(course)
+        elif '=' in argv[i]:
+            code,subs = argv[i].split('=')
+            for sub in subs.split(","):
+                if sub.isnumeric():
+                    for course in bigData:
+                        if code == course["Class"] and int(sub) == int(course["Section"]):
+                            allAdvisings[i].append(course)
+                else:
+                    for course in bigData:
+                        if code == course["Class"] and sub == course["Faculty"]:
+                            allAdvisings[i].append(course)
         else:
-            code,sub = argv[i].split('-')
-            if sub.isnumeric():
-                for course in bigData:
-                    if code == course["Class"] and int(sub) == int(course["Section"]):
-                        allAdvisings[i].append(course)
-            else:
-                for course in bigData:
-                    if code == course["Class"] and sub == course["Faculty"]:
-                        allAdvisings[i].append(course)
+            code,subs = argv[i].split('-')
+            for sub in subs.split(","):
+                if sub.isnumeric():
+                    for course in bigData:
+                        if code == course["Class"] and int(sub) != int(course["Section"]):
+                            allAdvisings[i].append(course)
+                else:
+                    for course in bigData:
+                        if code == course["Class"] and sub != course["Faculty"]:
+                            allAdvisings[i].append(course)
+
     advisedClasses = []
     posibilityClasses(allAdvisings,timeTable,seatNumbers,advisedClasses)
     return advisedClasses
