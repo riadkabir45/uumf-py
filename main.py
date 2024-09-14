@@ -125,7 +125,10 @@ class UUMF(MainWindow,QThread):
         routine = self.bigData[index]
         exams = ""
         for course in routine:
-            exams += course['exam'] + '\n'
+            if course['req'] == "":
+                exams += f"{course['exam']}\n"
+            else:
+                exams += f"{course['exam']}: {course['req']}\n"
             for cTime in course["Time"]:
                 cDay = cTime[:2]
                 cSlot = int(cTime[-1])

@@ -53,17 +53,25 @@ def cleanTime(times):
 def getData(credins):
     downloader = getCredins(credins)
     response = downloader.get("https://usis.bracu.ac.bd/interim/api/v1/offered-courses")
+    rex = downloader.get("https://usis.bracu.ac.bd/interim/api/v1/exam-schedules")
+    rep = downloader.get("https://usis.bracu.ac.bd/interim/api/v1/pre-requisite-course")
     if '[200]' not in str(response):
         return ["EXPIRED"]
     dataTable = Jload(response.text)
-    sessionId = dataTable[0]['academicSessionId']
-    rex = downloader.get("https://usis.bracu.ac.bd/interim/api/v1/exam-schedules")
+
+    reqData = rep.json()
 
     usisData = {}
     for course in rex.json():
         if course['courseCode'] not in usisData:
             usisData[course['courseCode']] = {}
         usisData[course['courseCode']][course['section'][-3:-1]] = f"{course['courseCode']} - {course['examDate']} @ {course['startTime']} - {course['endTime']}"
+    
+    for course in reqData:
+        if course['courseCode'] not in usisData:
+            usisData[course['courseCode']] = {}
+        usisData[course['courseCode']]['prereq'] = ", ".join(f"{item['preRequisiteCourseCode']}: {item['preRequisiteCourseTitle']}" for item in course['preRequisiteCourses'])
+
     
     cleanedTable = []
     for data in dataTable:
@@ -80,12 +88,17 @@ def getData(credins):
         dataDict["Seats"] = 0 if seats == None else int(seats)
         dataDict["Faculty"] = fac
         dataDict['exam'] = exams
+        dataDict['req'] = ""
+
         
         ex_course = usisData.get(className)
         if ex_course is not None:
             ex_section = ex_course.get(section)
             if ex_section is not None:
                 dataDict['exam'] = ex_section
+            req_course = ex_course.get('prereq')
+            if req_course is not None:
+                dataDict['req'] = req_course
         cleanedTable.append(dataDict)
     return cleanedTable
 
